@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go-Vault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'mono': ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white text-black font-mono leading-tight">
+    <div class="min-h-screen p-4 md:p-8">
+        <div class="max-w-2xl mx-auto">
+            <!-- Header -->
+            <header class="mb-12">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2">GO-VAULT</h1>
+                        <p class="text-sm text-gray-600 uppercase tracking-wide">Secure File Sharing</p>
+                    </div>
+                    <div id="user-status" class="hidden">
+                        <button 
+                            hx-post="/api/logout" 
+                            hx-target="#auth-result"
+                            hx-on::after-request="location.reload()"
+                            class="px-4 py-2 bg-red-600 text-white text-xs font-bold uppercase tracking-wide hover:bg-red-700 transition-colors"
+                        >
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Auth Section -->
+            <section id="auth-section" class="mb-12 border-t border-black pt-8">
+                <h2 class="text-xl font-bold mb-6 uppercase">Authentication</h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Login -->
+                    <div>
+                        <h3 class="text-sm font-bold mb-4 uppercase tracking-wide">Login</h3>
+                        <form hx-post="/api/login" hx-target="#auth-result" hx-on::after-request="handleAuthResponse(event)" class="space-y-4">
+                            <input 
+                                type="text" 
+                                name="username" 
+                                placeholder="USERNAME" 
+                                required
+                                class="w-full p-3 border border-black bg-white text-sm uppercase tracking-wide focus:outline-none focus:bg-gray-50"
+                            >
+                            <input 
+                                type="password" 
+                                name="password" 
+                                placeholder="PASSWORD" 
+                                required
+                                class="w-full p-3 border border-black bg-white text-sm uppercase tracking-wide focus:outline-none focus:bg-gray-50"
+                            >
+                            <button 
+                                type="submit"
+                                class="w-full p-3 bg-black text-white text-sm font-bold uppercase tracking-wide hover:bg-gray-800 transition-colors"
+                            >
+                                Login
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Register -->
+                    <div>
+                        <h3 class="text-sm font-bold mb-4 uppercase tracking-wide">Register</h3>
+                        <form hx-post="/api/register" hx-target="#auth-result" hx-on::after-request="handleAuthResponse(event)" class="space-y-4">
+                            <input 
+                                type="text" 
+                                name="username" 
+                                placeholder="USERNAME" 
+                                required
+                                class="w-full p-3 border border-black bg-white text-sm uppercase tracking-wide focus:outline-none focus:bg-gray-50"
+                            >
+                            <input 
+                                type="password" 
+                                name="password" 
+                                placeholder="PASSWORD" 
+                                required
+                                class="w-full p-3 border border-black bg-white text-sm uppercase tracking-wide focus:outline-none focus:bg-gray-50"
+                            >
+                            <button 
+                                type="submit"
+                                class="w-full p-3 bg-white border border-black text-black text-sm font-bold uppercase tracking-wide hover:bg-gray-50 transition-colors"
+                            >
+                                Register
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="auth-result" class="mt-6"></div>
+            </section>
+
+            <!-- Upload Section -->
+            <section id="upload-section" class="mb-12 border-t border-black pt-8 hidden">
+                <h2 class="text-xl font-bold mb-6 uppercase">Upload File</h2>
+                
+                <form hx-post="/api/upload" hx-encoding="multipart/form-data" hx-target="#upload-result" hx-on::after-request="if(event.detail.successful) this.reset()" class="space-y-6">
+                    <div class="border-2 border-dashed border-black p-8 text-center">
+                        <input 
+                            type="file" 
+                            name="file" 
+                            required
+                            class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-bold file:bg-black file:text-white file:uppercase file:tracking-wide hover:file:bg-gray-800"
+                        >
+                        <p class="mt-2 text-xs text-gray-600 uppercase tracking-wide">Drag & Drop or Click to Select</p>
+                    </div>
+                    
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" name="onetime" value="true" class="w-4 h-4 border border-black">
+                        <span class="text-sm font-bold uppercase tracking-wide">Burn After Reading</span>
+                    </label>
+                    
+                    <button 
+                        type="submit"
+                        class="w-full p-4 bg-black text-white text-sm font-bold uppercase tracking-wide hover:bg-gray-800 transition-colors"
+                    >
+                        Upload File
+                    </button>
+                </form>
+
+                <div id="upload-result" class="mt-6"></div>
+            </section>
+
+            <!-- Files Section -->
+            <section id="files-section" class="border-t border-black pt-8 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold uppercase">My Files</h2>
+                    <button 
+                        hx-get="/api/my-files" 
+                        hx-target="#file-list"
+                        class="px-4 py-2 bg-white border border-black text-black text-xs font-bold uppercase tracking-wide hover:bg-gray-50 transition-colors"
+                    >
+                        Refresh
+                    </button>
+                </div>
+                
+                <div id="file-list" 
+                     hx-get="/api/my-files" 
+                     hx-trigger="load, every 30s"
+                     class="space-y-2">
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="mt-16 pt-8 border-t border-black">
+                <p class="text-xs text-gray-600 uppercase tracking-wide">Go-Vault &copy 2025</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function handleAuthResponse(event) {
+            const response = event.detail.xhr.responseText;
+            
+            // Check if login/register was successful
+            if (response.includes('successful')) {
+                // Clear the form
+                event.target.reset();
+                
+                // If it's login success, show logged in state
+                if (response.includes('Login successful')) {
+                    showLoggedInState();
+                }
+            }
+        }
+        
+        function showLoggedInState() {
+            // Hide auth section
+            document.getElementById('auth-section').classList.add('hidden');
+            
+            // Show upload and files sections
+            document.getElementById('upload-section').classList.remove('hidden');
+            document.getElementById('files-section').classList.remove('hidden');
+            
+            // Show logout button
+            document.getElementById('user-status').classList.remove('hidden');
+        }
+        
+        // Check if user is already logged in on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/check-auth')
+                .then(response => {
+                    if (response.ok) {
+                        showLoggedInState();
+                    }
+                })
+                .catch(() => {
+                    // User not logged in, show auth section
+                });
+        });
+    </script>
+</body>
+</html>
