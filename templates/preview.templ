@@ -1,0 +1,49 @@
+package templates
+
+import "github.com/elghazx/go-vault/internal/core/domain"
+
+templ FilePreview(file *domain.File, host string) {
+	@Layout(file.FileName) {
+		<div class="min-h-screen p-8">
+			<div class="max-w-2xl mx-auto">
+				<h1 class="text-2xl font-bold mb-2 uppercase">Go-Vault</h1>
+				<p class="text-sm text-gray-600 mb-8 uppercase tracking-wide">File Sharing</p>
+				
+				if file.IsOneTime {
+					<div class="p-4 bg-red-100 border border-red-300 text-red-800 mb-4">
+						<strong>WARNING:</strong> This file will be deleted after download!
+					</div>
+				}
+				
+				<div class="border border-black p-8 text-center">
+					<h2 class="text-xl font-bold mb-4 uppercase">{ file.FileName }</h2>
+					<p class="text-sm text-gray-600 mb-6 uppercase tracking-wide">Ready to Download</p>
+					
+					<a href={ templ.URL("/d/" + file.UUID) } 
+					   class="inline-block px-6 py-3 bg-black text-white font-bold uppercase tracking-wide hover:bg-gray-800 transition-colors">
+						Download File
+					</a>
+					
+					<div class="mt-6 p-4 bg-gray-50 border border-gray-300">
+						<p class="text-xs text-gray-600 uppercase tracking-wide mb-2">Share this link:</p>
+						<div class="flex items-center space-x-2">
+							<code id="shareUrl" class="text-sm bg-white border border-gray-300 p-2 flex-1">{ host }/f/{ file.UUID }</code>
+							<button onclick="copyToClipboard()" class="px-3 py-2 bg-black text-white text-xs font-bold uppercase tracking-wide hover:bg-gray-800">
+								Copy
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<script>
+			function copyToClipboard() {
+				const url = document.getElementById('shareUrl').textContent;
+				navigator.clipboard.writeText('http://' + url).then(() => {
+					alert('Link copied to clipboard!');
+				});
+			}
+		</script>
+	}
+}
