@@ -1,0 +1,20 @@
+services:
+  go-vault:
+    image: ghcr.io/elghazx/go-vault:latest
+    container_name: go-vault
+    ports:
+      - "8080:8080"
+    volumes:
+      - /ssd/go-vault/data:/app/data
+      - /hdd/go-vault/uploads:/app/uploads
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_PATH=/app/data/go-vault.db
+      - UPLOADS_PATH=/app/uploads
+      - PORT=8080
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
